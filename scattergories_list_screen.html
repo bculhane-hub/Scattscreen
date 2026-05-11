@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scattergories TV</title>
+<style>
+  :root {
+    --bg: #070912;
+    --card: #121625;
+    --text: #ffffff;
+    --muted: #c4c7d4;
+    --accent: #8b5cf6;
+    --danger: #ef4444;
+    --good: #22c55e;
+    --warn: #fbbf24;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(139,92,246,.32), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(34,197,94,.16), transparent 36%),
+      var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  .app {
+    width: min(96vw, 1800px);
+    margin: 0 auto;
+    padding: clamp(18px, 2vw, 36px);
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: clamp(18px, 2vw, 36px);
+    align-items: center;
+    margin-bottom: clamp(18px, 2vw, 34px);
+  }
+
+  .brand {
+    font-size: clamp(38px, 4.2vw, 82px);
+    font-weight: 1000;
+    letter-spacing: -0.05em;
+    line-height: .9;
+  }
+
+  .status {
+    text-align: right;
+    color: var(--muted);
+    font-size: clamp(18px, 1.5vw, 30px);
+    font-weight: 700;
+  }
+
+  .letterBox, .timerBox {
+    background: rgba(18, 22, 37, .94);
+    border: 2px solid rgba(255,255,255,.12);
+    border-radius: 28px;
+    padding: clamp(18px, 2vw, 34px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.36);
+  }
+
+  .letter {
+    font-size: clamp(118px, 11vw, 230px);
+    font-weight: 1000;
+    line-height: .82;
+    text-align: center;
+    min-width: clamp(150px, 14vw, 270px);
+  }
+
+  .timer {
+    font-size: clamp(88px, 8vw, 175px);
+    font-weight: 1000;
+    line-height: .9;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer.done {
+    color: var(--danger);
+    animation: pulse .75s infinite alternate;
+  }
+
+  .timer.countdown {
+    color: var(--warn);
+  }
+
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.035); }
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  button, select {
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 22px;
+    font-weight: 900;
+    font-size: clamp(16px, 1.15vw, 24px);
+    color: white;
+    background: #2b3148;
+    cursor: pointer;
+  }
+
+  button.primary { background: var(--accent); }
+  button.good { background: var(--good); color: #06120a; }
+  button:disabled { opacity: .36; cursor: not-allowed; }
+  select { background: #2b3148; }
+
+  .mainCard {
+    background: rgba(18, 22, 37, .94);
+    border: 2px solid rgba(255,255,255,.12);
+    border-radius: 34px;
+    padding: clamp(24px, 2.4vw, 46px);
+    box-shadow: 0 20px 70px rgba(0,0,0,.38);
+    min-height: 62vh;
+  }
+
+  .listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: clamp(18px, 2vw, 34px);
+  }
+
+  .listTitle {
+    font-size: clamp(54px, 5.8vw, 116px);
+    font-weight: 1000;
+    line-height: .85;
+    letter-spacing: -0.055em;
+  }
+
+  .roundInfo {
+    font-size: clamp(20px, 1.55vw, 34px);
+    color: var(--muted);
+    font-weight: 800;
+    text-align: right;
+  }
+
+  .hiddenBox {
+    min-height: 46vh;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    border: 3px dashed rgba(255,255,255,.18);
+    border-radius: 30px;
+    color: var(--muted);
+    padding: 30px;
+    font-size: clamp(28px, 2.5vw, 56px);
+    font-weight: 800;
+  }
+
+  .hiddenBox strong {
+    display: block;
+    color: var(--text);
+    font-size: clamp(70px, 7vw, 150px);
+    letter-spacing: -0.06em;
+    margin-bottom: 18px;
+    line-height: .85;
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 1.25em;
+    columns: 2;
+    column-gap: clamp(52px, 6vw, 120px);
+  }
+
+  li {
+    break-inside: avoid;
+    font-size: clamp(34px, 3.2vw, 72px);
+    font-weight: 950;
+    line-height: 1.06;
+    margin: 0 0 clamp(16px, 1.5vw, 30px);
+    letter-spacing: -0.035em;
+  }
+
+  .note {
+    color: var(--warn);
+    font-size: .7em;
+    white-space: nowrap;
+  }
+
+  .setupControls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  body.playing .setupControls,
+  body.playing .brand,
+  body.playing .status {
+    opacity: .15;
+  }
+
+  body.playing .mainCard {
+    min-height: 70vh;
+  }
+
+  @media (max-width: 900px) {
+    .topbar {
+      grid-template-columns: 1fr;
+    }
+    .brand, .status { text-align: center; }
+    ol { columns: 1; }
+    .listHeader { flex-direction: column; }
+    .roundInfo { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Scattergories</div>
+
+    <div class="letterBox">
+      <div class="letter" id="letter">?</div>
+      <div class="controls">
+        <button class="primary" id="pickLetterBtn">Pick Letter</button>
+        <button id="rerollBtn" disabled>1 Re-roll</button>
+      </div>
+    </div>
+
+    <div class="timerBox">
+      <div class="timer" id="timer">3:00</div>
+      <div class="controls">
+        <button class="good" id="startRoundBtn">Start Round</button>
+        <button id="pauseBtn" disabled>Pause</button>
+        <button id="resetRoundBtn">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="mainCard">
+    <div class="listHeader">
+      <div>
+        <div class="listTitle" id="listTitle">List 1</div>
+        <div class="roundInfo" id="roundInfo">Choose a list, pick a letter, then start.</div>
+      </div>
+      <div class="setupControls">
+        <button id="prevBtn">Previous</button>
+        <select id="listSelect"></select>
+        <button id="nextBtn">Next</button>
+        <button class="primary" id="randomListBtn">Random List</button>
+      </div>
+    </div>
+
+    <div id="listArea"></div>
+  </section>
+</div>
+
+<script>
+const lists = [
+  ["A boy’s name","Counties","Things that are cold","School equipment","Teams","Insects","Breakfast foods","Furniture","TV shows","Things in the ocean","Things you collect","Product names"],
+  ["Vegetables","Things in a DIY shop","Things that smell","Occupations","Appliances","Cartoon characters","Birds","Musical groups","Shop names","Things at a football game","Trees","Personality traits"],
+  ["Articles of clothing","Desserts","Car parts","Things found on a map","Athletes","Four-letter words","Things found in the fridge","Farm animals","Units of currency","Things at the seaside","Colours","Tools"],
+  ["Sports","Song titles","Parts of the body","Things that fly","Things that float","Drinks","A girl’s name","TV stars","Items in the kitchen","Villains/Monsters","Flowers","Things found on the farm"],
+  ["Sandwiches","Things that you read","World leaders/politicians","School subjects","Excuses for being late <span class='note'>(Max 1P)</span>","Alcoholic beverages","Advertising slogans","Modes of transport","Things in a park","Foreign cities","Stones/gems","Musical instruments"],
+  ["Things that are sticky","Famous landmarks","Cars","Herbs and spices","Bad habits","Cosmetics/toiletries","Celebrities","Cooking utensils","Reptiles/amphibians","Mountains","Leisure activities","Things that fasten"],
+  ["Fictional characters","Actors and actresses","Magazines","Capitals","Sweets","Office equipment","Footwear","Slang words <span class='note'>(Max 2P)</span>","Things you take on holiday","Things with tails","Sports equipment","Crimes"],
+  ["Singers","Things in the sky","Things found at the bakery","Olympic sports","Fish","Countries","Things that have spots","Historical figures","Things you are afraid of","Terms of measurement","Items in this room","Fast food chains"],
+  ["Famous dead people","Notorious people","Fruits","Things in the bathroom cabinet","Toys","Household chores","Bodies of water","Authors","Things you communicate by","Weapons","Things that are round","Things associated with exercise"],
+  ["Famous musicians/bands","Mythological characters","Terms of endearment","Dances","Famous paintings","Vehicles","Airlines","Things associated with Christmas","Dairy products","Things that annoy you <span class='note'>(Max 2P)</span>","Items in your handbag/wallet","Catchphrases"],
+  ["Book titles","Things found in a pub","Things found in a desk","Holiday locations","Diseases","Words associated with money","Fashion brands","Film titles","Games","Things you can wear","Apps/websites","Things in a circus"],
+  ["Famous females","Breeds of dogs","Things made of metal","Hobbies","Persons in uniform","Things you plug in","Animals","Languages","Things you can find in supermarkets","Charities","Things made of paper","Companies"]
+];
+
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWY".split("");
+let currentList = 0;
+let currentLetter = "?";
+let rerollUsed = false;
+let timeLeft = 180;
+let timerId = null;
+let countdownId = null;
+let running = false;
+let listVisible = false;
+let countdownRunning = false;
+
+const letterEl = document.getElementById("letter");
+const timerEl = document.getElementById("timer");
+const listArea = document.getElementById("listArea");
+const listTitleEl = document.getElementById("listTitle");
+const listSelect = document.getElementById("listSelect");
+const rerollBtn = document.getElementById("rerollBtn");
+const startRoundBtn = document.getElementById("startRoundBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const roundInfo = document.getElementById("roundInfo");
+
+function pickLetter() {
+  currentLetter = letters[Math.floor(Math.random() * letters.length)];
+  letterEl.textContent = currentLetter;
+  rerollBtn.disabled = false;
+  roundInfo.textContent = `Letter ${currentLetter} selected. One re-roll available.`;
+}
+
+function renderList() {
+  listTitleEl.textContent = `List ${currentList + 1}`;
+  listSelect.value = currentList;
+  if (!listVisible) {
+    listArea.innerHTML = `
+      <div class="hiddenBox">
+        <div>
+          <strong>List Hidden</strong>
+          Pick the letter first. The list appears after 3, 2, 1, GO!
+        </div>
+      </div>`;
+    return;
+  }
+  listArea.innerHTML = `<ol>${lists[currentList].map(item => `<li>${item}</li>`).join("")}</ol>`;
+}
+
+function setList(i) {
+  currentList = (i + lists.length) % lists.length;
+  listVisible = false;
+  resetTimerOnly();
+  renderList();
+  roundInfo.textContent = `List ${currentList + 1} selected. Pick a letter, then start.`;
+}
+
+function resetTimerOnly() {
+  clearInterval(timerId);
+  clearInterval(countdownId);
+  timerId = null;
+  countdownId = null;
+  running = false;
+  countdownRunning = false;
+  timeLeft = 180;
+  startRoundBtn.disabled = false;
+  startRoundBtn.textContent = "Start Round";
+  pauseBtn.disabled = true;
+  pauseBtn.textContent = "Pause";
+  pauseBtn.onclick = pauseTimer;
+  timerEl.classList.remove("done", "countdown");
+  document.body.classList.remove("playing");
+  renderTimer();
+}
+
+function renderTimer() {
+  const mins = Math.floor(timeLeft / 60);
+  const secs = String(timeLeft % 60).padStart(2, "0");
+  timerEl.textContent = `${mins}:${secs}`;
+}
+
+function beep(freq = 880, duration = 180) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    gain.gain.value = 0.18;
+    osc.start();
+    setTimeout(() => { osc.stop(); ctx.close(); }, duration);
+  } catch(e) {}
+}
+
+function gong() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const freqs = [165, 220, 330, 440];
+    freqs.forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.34 / (i + 1), now + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 4);
+    });
+    setTimeout(() => ctx.close(), 4300);
+  } catch(e) {}
+}
+
+function startMainTimer() {
+  listVisible = true;
+  renderList();
+  timerEl.classList.remove("countdown");
+  timeLeft = 180;
+  renderTimer();
+  running = true;
+  pauseBtn.disabled = false;
+  startRoundBtn.disabled = true;
+  document.body.classList.add("playing");
+  roundInfo.textContent = `Letter ${currentLetter} • 180 seconds`;
+
+  timerId = setInterval(() => {
+    timeLeft--;
+    renderTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      running = false;
+      timeLeft = 0;
+      pauseBtn.disabled = true;
+      timerEl.classList.add("done");
+      roundInfo.textContent = "Round over!";
+      gong();
+    }
+  }, 1000);
+}
+
+function startRound() {
+  if (countdownRunning || running) return;
+  if (currentLetter === "?") pickLetter();
+
+  listVisible = false;
+  renderList();
+  countdownRunning = true;
+  startRoundBtn.disabled = true;
+  pauseBtn.disabled = true;
+  timerEl.classList.add("countdown");
+  roundInfo.textContent = "Get ready...";
+
+  const sequence = ["3", "2", "1", "GO!"];
+  let index = 0;
+  timerEl.textContent = sequence[index];
+  beep(600, 120);
+
+  countdownId = setInterval(() => {
+    index++;
+    if (index < sequence.length) {
+      timerEl.textContent = sequence[index];
+      beep(index === 3 ? 950 : 600, 120);
+    } else {
+      clearInterval(countdownId);
+      countdownId = null;
+      countdownRunning = false;
+      startMainTimer();
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  if (!running) return;
+  clearInterval(timerId);
+  timerId = null;
+  running = false;
+  pauseBtn.textContent = "Resume";
+  pauseBtn.onclick = resumeTimer;
+  roundInfo.textContent = "Paused";
+}
+
+function resumeTimer() {
+  if (running || timeLeft <= 0) return;
+  running = true;
+  pauseBtn.textContent = "Pause";
+  pauseBtn.onclick = pauseTimer;
+  roundInfo.textContent = `Letter ${currentLetter} • 180 seconds`;
+  timerId = setInterval(() => {
+    timeLeft--;
+    renderTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      running = false;
+      timeLeft = 0;
+      pauseBtn.disabled = true;
+      timerEl.classList.add("done");
+      roundInfo.textContent = "Round over!";
+      gong();
+    }
+  }, 1000);
+}
+
+function resetRound() {
+  resetTimerOnly();
+  currentLetter = "?";
+  letterEl.textContent = "?";
+  rerollUsed = false;
+  rerollBtn.disabled = true;
+  listVisible = false;
+  roundInfo.textContent = "Choose a list, pick a letter, then start.";
+  renderList();
+}
+
+function rerollLetter() {
+  if (rerollUsed || currentLetter === "?") return;
+  let old = currentLetter;
+  let tries = 0;
+  do { pickLetter(); tries++; } while (currentLetter === old && tries < 10);
+  rerollUsed = true;
+  rerollBtn.disabled = true;
+  roundInfo.textContent = `Letter re-rolled to ${currentLetter}. No re-rolls left.`;
+}
+
+lists.forEach((_, i) => {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = `List ${i + 1}`;
+  listSelect.appendChild(opt);
+});
+
+document.getElementById("pickLetterBtn").addEventListener("click", () => {
+  pickLetter();
+  rerollUsed = false;
+  rerollBtn.disabled = false;
+});
+document.getElementById("rerollBtn").addEventListener("click", rerollLetter);
+document.getElementById("startRoundBtn").addEventListener("click", startRound);
+pauseBtn.addEventListener("click", pauseTimer);
+document.getElementById("resetRoundBtn").addEventListener("click", resetRound);
+document.getElementById("prevBtn").addEventListener("click", () => setList(currentList - 1));
+document.getElementById("nextBtn").addEventListener("click", () => setList(currentList + 1));
+document.getElementById("randomListBtn").addEventListener("click", () => setList(Math.floor(Math.random() * lists.length)));
+listSelect.addEventListener("change", e => setList(Number(e.target.value)));
+
+renderList();
+renderTimer();
+</script>
+</body>
+</html>
